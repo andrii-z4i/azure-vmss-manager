@@ -79,8 +79,8 @@ def get_vmss_public_ips(resource_group: str, vmss_name: str, tag_name: str = Non
     for vm_name in vm_names:
         vm_details = request_vm_details(resource_group, vm_name)
         
-        if args.tag_name and \
-            args.tag_value and \
+        if tag_name and \
+            tag_value and \
             not does_vm_have_tag_set(vm_details, tag_name, tag_value):
                 continue # skip this vm
         vms_ips[vm_name] = get_vm_public_ip(resource_group, vm_name)
