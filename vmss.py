@@ -12,9 +12,13 @@ def ssh_to_vm(public_ip: str, username: str, private_key: str):
 
 def broadcast_command(ssh_connections: list, command: str):
     for ssh in ssh_connections:
+        print(f'Executing command on {ssh} -- {command}')
         stdin, stdout, stderr = ssh_connections[ssh].exec_command(command)
+        if stderr.channel.recv_exit_status() != 0:
+            print(f'[{ssh}] Error: {stderr.readlines()}')
+            continue
         for line in stdout.readlines():
-            print(f'{ssh} -- {line.strip()}')
+            print(f'[{ssh}] -- {line.strip()}')
     
 def close_ssh_connections(ssh_connections: dict):
     for ssh in ssh_connections:
@@ -23,6 +27,18 @@ def close_ssh_connections(ssh_connections: dict):
 def save_private_key_to_file(private_key: str, file_name: str):
     with open(file_name, 'w') as f:
         f.write(private_key)
+
+def start_shell(ssh_connections: dict):
+    continue_to_run = True
+
+    while continue_to_run:
+        command = input('Enter command: ')
+        if command == 'exit':
+            continue_to_run = False
+            continue
+
+        broadcast_command(ssh_connections, command)
+
 
 def remove_private_key_file(file_name: str):
     import os
@@ -53,7 +69,8 @@ if __name__ == '__main__':
                 continue
             print(f'VM name: {vm_name}, public IP: {public_ip[0]}') 
             ssh_connection[public_ip[0]] = ssh_to_vm(public_ip[0], args.user_name, 'private_key.pem')
-        broadcast_command(ssh_connection, 'sudo apt-get update')
+        
+        start_shell(ssh_connection)
     except Exception as e:
         print(e)
     finally:
