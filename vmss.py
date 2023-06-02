@@ -10,15 +10,19 @@ def ssh_to_vm(public_ip: str, username: str, private_key: str):
     ssh.connect(public_ip, username=username, key_filename=private_key)
     return ssh
 
+def print_command_output(ssh, std, type=None):
+    for line in std.readlines():
+        print(f'[{ssh}{" <" + type + ">" if type else ""}] -- {line.strip()}')
+
+
 def broadcast_command(ssh_connections: list, command: str):
     for ssh in ssh_connections:
         print(f'Executing command on {ssh} -- {command}')
         stdin, stdout, stderr = ssh_connections[ssh].exec_command(command)
         if stderr.channel.recv_exit_status() != 0:
-            print(f'[{ssh}] Error: {stderr.readlines()}')
+            print_command_output(ssh, stderr, 'ERROR')
             continue
-        for line in stdout.readlines():
-            print(f'[{ssh}] -- {line.strip()}')
+        print_command_output(ssh, stdout)
     
 def close_ssh_connections(ssh_connections: dict):
     for ssh in ssh_connections:
